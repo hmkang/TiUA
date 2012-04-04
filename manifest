@@ -1,0 +1,18 @@
+#
+# this is your module manifest and used by Titanium
+# during compilation, packaging, distribution, etc.
+#
+version: 0.1
+apiversion: 2
+description: My module
+author: Your Name
+license: Specify your license
+copyright: Copyright (c) 2012 by Your Company
+
+
+# these should not be edited
+name: tiua
+moduleid: com.hmkang.TiUA
+guid: 37094f2e-67f8-4879-93f6-74219d77f2e8
+platform: android
+minsdk: 1.8.2
