@@ -4,6 +4,8 @@
 		Similar to tiapp.xml, but contains module/platform specific
 		configuration in <iphone> and <android> sections
 	-->
+    <property name="testfield" type="string">hellovalue</property>
+
 	<iphone>
 	</iphone>
 	<android xmlns:android="http://schemas.android.com/apk/res/android">
@@ -49,8 +51,9 @@
                 <!-- REQUIRED -->
                 <!-- The 'android:process' parameter is optional. Set it to a value starting
                     with a colon (:) to make it run in a separate, private process -->
-                <service android:name="com.urbanairship.push.PushService"
-                        android:process=":com.urbanairship.push.process"/>
+                <service android:enabled="true" 
+                        android:name="com.urbanairship.push.PushService" />
+                        <!--android:process=":com.urbanairship.push.process"/>-->
                 <!-- OPTIONAL, if you want to receive push, push opened and registration completed intents -->
                 <receiver android:name="com.hmkang.TiUA.IntentReceiver" />
             </application>

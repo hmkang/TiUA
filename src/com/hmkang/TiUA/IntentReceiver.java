@@ -25,10 +25,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package com.hmkang.TiUA;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -54,16 +50,18 @@ public class IntentReceiver extends BroadcastReceiver {
 		            + msg
 		            + " [NotificationID="+id+"]");
 
-		    logPushExtras(intent);
-            TiuaModule.getInstance().sendMessage(msg);
             TiuaModule.getInstance().fireEvent("tiuapush", msg);
 
 		} else if (action.equals(PushManager.ACTION_NOTIFICATION_OPENED)) {
 
             String msg = intent.getStringExtra(PushManager.EXTRA_ALERT);
 			Log.i(logTag, "User clicked notification. Message: " + msg);
-			logPushExtras(intent);
-            TiuaModule.getInstance().fireEvent("tiuaopen", msg);
+
+            Intent launch = new Intent(Intent.ACTION_MAIN);
+            //launch.setClass(UAirship.shared().getApplicationContext(), getTiContext().getActivity().class);
+            launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            UAirship.shared().getApplicationContext().startActivity(launch);
 
 		} else if (action.equals(PushManager.ACTION_REGISTRATION_FINISHED)) {
             String apid = intent.getStringExtra(PushManager.EXTRA_APID);
@@ -75,29 +73,5 @@ public class IntentReceiver extends BroadcastReceiver {
             }
             TiuaModule.getInstance().fireEvent("tiuaregister", apid);
 		}
-
-	}
-
-	/**
-	 * Log the values sent in the payload's "extra" dictionary.
-	 * 
-	 * @param intent A PushManager.ACTION_NOTIFICATION_OPENED or ACTION_PUSH_RECEIVED intent.
-	 */
-	private void logPushExtras(Intent intent) {
-        Set<String> keys = intent.getExtras().keySet();
-        for (String key : keys) {
-
-            //ignore standard C2DM extra keys
-            List<String> ignoredKeys = (List<String>)Arrays.asList(
-                    "collapse_key",//c2dm collapse key
-                    "from",//c2dm sender
-                    PushManager.EXTRA_NOTIFICATION_ID,//int id of generated notification (ACTION_PUSH_RECEIVED only)
-                    PushManager.EXTRA_PUSH_ID,//internal UA push id
-                    PushManager.EXTRA_ALERT);//ignore alert
-            if (ignoredKeys.contains(key)) {
-                continue;
-            }
-            Log.i(logTag, "Push Notification Extra: ["+key+" : " + intent.getStringExtra(key) + "]");
-        }
 	}
 }

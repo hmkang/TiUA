@@ -10,6 +10,7 @@ package com.hmkang.TiUA;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.app.Activity;
 
 import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.annotations.Kroll;
@@ -17,7 +18,7 @@ import org.appcelerator.kroll.KrollDict;
 
 import org.appcelerator.titanium.TiContext;
 import org.appcelerator.titanium.TiApplication;
-//import org.appcelerator.titanium.kroll.KrollFunction;
+import org.appcelerator.titanium.TiProperties;
 import org.appcelerator.kroll.common.Log;
 import org.appcelerator.kroll.common.TiConfig;
 
@@ -38,9 +39,8 @@ public class TiuaModule extends KrollModule
 	private static final String LCAT = "TiuaModule";
 	private static final boolean DBG = TiConfig.LOGD;
     private static TiuaModule _THIS;
+    private AirshipConfigOptions airshipConfig;
 
-    //private KrollFunction messageCallback;
-	
 	// You can define constants with @Kroll.constant, for example:
 	// @Kroll.constant public static final String EXTERNAL_NAME = value;
 	
@@ -48,40 +48,21 @@ public class TiuaModule extends KrollModule
 	{
 		super(tiContext);
         _THIS = this;
+        airshipConfig = null;
 	}
 
     static TiuaModule getInstance() {
         return _THIS;
     }
-
+/*
 	@Kroll.onAppCreate
 	public static void onAppCreate(TiApplication app)
 	{
 		Log.d(LCAT, "inside onAppCreate");
-		// put module init code that needs to run when the application is created
-        //AirshipConfigOptions options = new AirshipConfigOptions();
         AirshipConfigOptions options = AirshipConfigOptions.loadDefaultOptions(app);
-
-        // Optionally, customize your config at runtime:
-        //
-        /*
-        options.inProduction = inProduction;
-        options.hostURL = "https://go.urbanairship.com";
-        options.pushServiceEnabled = true;
-        options.c2dmSender = sender;
-        options.transport = transport;
-        if(options.inProduction){
-	        options.productionAppKey = key;
-	        options.productionAppSecret = secret;
-        }else{
-	        options.developmentAppKey = key;
-	        options.developmentAppSecret = secret;
-        }
-        */
-        
-        //Application app = (Application) mApp;
         UAirship.takeOff(app, options);
-        PushManager.enablePush(); // added by hmkang
+
+        PushManager.enablePush();
 
 		PushPreferences prefs = PushManager.shared().getPreferences();
 		Logger.info("My Application onCreate - App APID: " + prefs.getPushId());
@@ -89,37 +70,47 @@ public class TiuaModule extends KrollModule
         // Set intent receiver
         PushManager.shared().setIntentReceiver(IntentReceiver.class);
 	}
-    public void sendMessage(String alert){
-		Log.d(LCAT, "sendMessage called: " + alert);
-        /*
-        if(messageCallback != null){
-            KrollDict msg = new KrollDict();
-            msg.put("alert", data);
+*/
+    @Kroll.method
+    public void setAirshipConfig(KrollDict param){
+        AirshipConfigOptions options = new AirshipConfigOptions();
 
-            messageCallback.callSync(msg);
-        }
-        */
+        options.inProduction = (Boolean)param.get("inProduction");
+        //options.hostURL = (String)param.get("hostURL");
+        options.pushServiceEnabled = (Boolean)param.get("pushServiceEnabled");
+        options.c2dmSender = (String)param.get("c2dmSender");
+        options.transport = (String)param.get("transport");
+        options.productionAppKey = (String)param.get("productionAppKey");
+        options.productionAppSecret = (String)param.get("productionAppSecret");
+        options.developmentAppKey = (String)param.get("developmentAppKey");
+        options.developmentAppSecret = (String)param.get("developmentAppSecret");
+
+        airshipConfig = options;
     }
-	// Methods
+    private AirshipConfigOptions getAirshipConfig() {
+        return airshipConfig;
+    }
+    private void registerUA() {
+		Log.d(LCAT, "inside registerUA()");
+
+        UAirship.takeOff(getTiContext().getTiApp(), getAirshipConfig());
+
+        PushManager.enablePush();
+
+		PushPreferences prefs = PushManager.shared().getPreferences();
+		Logger.info("My Application onCreate - App APID: " + prefs.getPushId());
+
+        // Set intent receiver
+        PushManager.shared().setIntentReceiver(IntentReceiver.class);
+    }
 	@Kroll.method
-	public void registerCallback(KrollDict options)
-	{
-		Log.d(LCAT, "registerCallback called");
-        //messageCallback = (KrollFunction)options.get("callback");
-	}
-	
-	// Properties
-	@Kroll.getProperty
-	public String getExampleProp()
-	{
-		Log.d(LCAT, "get example property");
-		return "hello world";
-	}
-	
-	
-	@Kroll.setProperty
-	public void setExampleProp(String value) {
-		Log.d(LCAT, "set example property: " + value);
-	}
+    public void registerPush(KrollDict param) {
+		Log.d(LCAT, "inside registerPush()");
+
+        Activity myAct = getTiContext().getTiApp().getCurrentActivity();
+        Log.d(LCAT, "className: " +myAct.getComponentName());
+        setAirshipConfig(param);
+        registerUA();
+    }
 }
 
