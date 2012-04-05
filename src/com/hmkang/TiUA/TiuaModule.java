@@ -8,12 +8,16 @@
  */
 package com.hmkang.TiUA;
 import android.app.Application;
+import android.content.Context;
+import android.content.Intent;
 
 import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.kroll.KrollDict;
 
+import org.appcelerator.titanium.TiContext;
 import org.appcelerator.titanium.TiApplication;
+//import org.appcelerator.titanium.kroll.KrollFunction;
 import org.appcelerator.kroll.common.Log;
 import org.appcelerator.kroll.common.TiConfig;
 
@@ -33,33 +37,34 @@ public class TiuaModule extends KrollModule
 	// Standard Debugging variables
 	private static final String LCAT = "TiuaModule";
 	private static final boolean DBG = TiConfig.LOGD;
-	private static TiApplication mApp = null;
+    private static TiuaModule _THIS;
+
+    //private KrollFunction messageCallback;
 	
 	// You can define constants with @Kroll.constant, for example:
 	// @Kroll.constant public static final String EXTERNAL_NAME = value;
 	
-	public TiuaModule()
+	public TiuaModule(TiContext tiContext)
 	{
-		super();
+		super(tiContext);
+        _THIS = this;
 	}
+
+    static TiuaModule getInstance() {
+        return _THIS;
+    }
 
 	@Kroll.onAppCreate
 	public static void onAppCreate(TiApplication app)
 	{
 		Log.d(LCAT, "inside onAppCreate");
-		mApp = app;
-	}
-
-	// Methods
-	@Kroll.method
-	public void registerPush(String key, String secret, String sender, String transport, Boolean inProduction)
-	{
 		// put module init code that needs to run when the application is created
-        AirshipConfigOptions options = new AirshipConfigOptions();
-        //AirshipConfigOptions.loadDefaultOptions(this);
+        //AirshipConfigOptions options = new AirshipConfigOptions();
+        AirshipConfigOptions options = AirshipConfigOptions.loadDefaultOptions(app);
 
         // Optionally, customize your config at runtime:
         //
+        /*
         options.inProduction = inProduction;
         options.hostURL = "https://go.urbanairship.com";
         options.pushServiceEnabled = true;
@@ -72,14 +77,35 @@ public class TiuaModule extends KrollModule
 	        options.developmentAppKey = key;
 	        options.developmentAppSecret = secret;
         }
+        */
         
-        Application app = (Application) mApp;
+        //Application app = (Application) mApp;
         UAirship.takeOff(app, options);
         PushManager.enablePush(); // added by hmkang
 
 		PushPreferences prefs = PushManager.shared().getPreferences();
 		Logger.info("My Application onCreate - App APID: " + prefs.getPushId());
-		Log.d(LCAT, "example called");
+
+        // Set intent receiver
+        PushManager.shared().setIntentReceiver(IntentReceiver.class);
+	}
+    public void sendMessage(String alert){
+		Log.d(LCAT, "sendMessage called: " + alert);
+        /*
+        if(messageCallback != null){
+            KrollDict msg = new KrollDict();
+            msg.put("alert", data);
+
+            messageCallback.callSync(msg);
+        }
+        */
+    }
+	// Methods
+	@Kroll.method
+	public void registerCallback(KrollDict options)
+	{
+		Log.d(LCAT, "registerCallback called");
+        //messageCallback = (KrollFunction)options.get("callback");
 	}
 	
 	// Properties
@@ -95,6 +121,5 @@ public class TiuaModule extends KrollModule
 	public void setExampleProp(String value) {
 		Log.d(LCAT, "set example property: " + value);
 	}
-
 }
 

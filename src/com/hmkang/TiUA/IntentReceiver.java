@@ -49,28 +49,31 @@ public class IntentReceiver extends BroadcastReceiver {
 		if (action.equals(PushManager.ACTION_PUSH_RECEIVED)) {
 
 		    int id = intent.getIntExtra(PushManager.EXTRA_NOTIFICATION_ID, 0);
-
+            String msg = intent.getStringExtra(PushManager.EXTRA_ALERT);
 		    Log.i(logTag, "Received push notification. Alert: " 
-		            + intent.getStringExtra(PushManager.EXTRA_ALERT)
+		            + msg
 		            + " [NotificationID="+id+"]");
 
 		    logPushExtras(intent);
+            TiuaModule.getInstance().sendMessage(msg);
+            TiuaModule.getInstance().fireEvent("tiuapush", msg);
 
 		} else if (action.equals(PushManager.ACTION_NOTIFICATION_OPENED)) {
 
-			Log.i(logTag, "User clicked notification. Message: " + intent.getStringExtra(PushManager.EXTRA_ALERT));
-
+            String msg = intent.getStringExtra(PushManager.EXTRA_ALERT);
+			Log.i(logTag, "User clicked notification. Message: " + msg);
 			logPushExtras(intent);
-
-            //Intent launch = new Intent(Intent.ACTION_MAIN);
-			//launch.setClass(UAirship.shared().getApplicationContext(), MainActivity.class);
-			//launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			
-            //UAirship.shared().getApplicationContext().startActivity(launch);
+            TiuaModule.getInstance().fireEvent("tiuaopen", msg);
 
 		} else if (action.equals(PushManager.ACTION_REGISTRATION_FINISHED)) {
-            Log.i(logTag, "Registration complete. APID:" + intent.getStringExtra(PushManager.EXTRA_APID)
-                    + ". Valid: " + intent.getBooleanExtra(PushManager.EXTRA_REGISTRATION_VALID, false));
+            String apid = intent.getStringExtra(PushManager.EXTRA_APID);
+            Boolean valid = intent.getBooleanExtra(PushManager.EXTRA_REGISTRATION_VALID, false) ;
+            Log.i(logTag, "Registration complete. APID:" + apid
+                    + ". Valid: " + valid);
+            if(!valid){
+                apid = "";
+            }
+            TiuaModule.getInstance().fireEvent("tiuaregister", apid);
 		}
 
 	}
