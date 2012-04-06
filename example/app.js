@@ -19,19 +19,37 @@ if (Ti.Platform.name == "android") {
 	var tiua = require('com.hmkang.TiUA');
 	Ti.API.info("module is => " + tiua);
 
-	ua.addEventListener('tiuapush', function(msg){
-		Ti.API.log('TiUA push received: ' + msg);
-	    Ti.UI.createAlertDialog({
-	      title:'TiUA push received',
-	      message: "Message: "+msg
-	    }).show();
+	tiua.registerForPushNotifications({
+		developmentAppKey: 'kW2iwe_fT8WljLpKmk6R7A',
+		developmentAppSecret: 'qFH031JTSjGJE3PLhQ7_3g',
+		transport: 'c2dm',
+		inProduction: false,
+		c2dmSender: 'hmkang@hmkang.com',
+		pushServiceEnabled: true,
+		
+		success: function(e) {
+			Ti.API.log('TiUA Register succeed: ' + e.apid);
+		    Ti.UI.createAlertDialog({
+		      title:'TiUA Registered',
+		      message: e.apid
+		    }).show();
+		},
+		error: function(e) {
+			Ti.API.log("TiUA Register failed: ");
+		},
+		callback: function(e) {
+			Ti.API.log('TiUA push received:');
+			var message = "";
+			for(var key in e){
+				Ti.API.log("Pushed: "+key+", "+e[key]);
+				message += key+":"+e[key]+"\n";
+			}
+		    Ti.UI.createAlertDialog({
+		      title:'TiUA push received',
+		      message: message
+		    }).show();
+		}
 	});
-	ua.addEventListener('tiuaregister', function(apid){
-		Ti.API.log('TiUA Registered: ' + valid);
-	    Ti.UI.createAlertDialog({
-	      title:'TiUA registered',
-	      message: "APID: "+apid
-	    }).show();
-	});
+
 }
 
