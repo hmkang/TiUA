@@ -20,11 +20,11 @@ if (Ti.Platform.name == "android") {
 	Ti.API.info("module is => " + tiua);
 
 	tiua.registerForPushNotifications({
-		developmentAppKey: 'kW2iwe_fT8WljLpKmk6R7A',
-		developmentAppSecret: 'qFH031JTSjGJE3PLhQ7_3g',
+		developmentAppKey: '<Your developmentAppKey>',
+		developmentAppSecret: '<Your developmentAppSecret>',
 		transport: 'c2dm',
 		inProduction: false,
-		c2dmSender: 'hmkang@hmkang.com',
+		c2dmSender: '<Your email as c2dmSender>',
 		pushServiceEnabled: true,
 		
 		success: function(e) {
