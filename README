@@ -1,3 +1,47 @@
 Titanium Urban Airship Module for Android.
 
-Usage: (See example/app.js)
+Module usage
+
+See "example/app.js"
+
+Build module
+
+1. Make sure that your build environment is valid on ".build.properties"
+2. You need a android sdk, ndk and ant
+3. The library is placed in "./lib". (you can replace to newer version.)
+4. Build command as below
+
+    ant clean dist
+
+Apply to your app
+
+* There is an example part of tiapp.xml 
+
+    <android xmlns:android="http://schemas.android.com/apk/res/android">
+        <manifest>
+            <permission android:name="[your.package].permission.C2D_MESSAGE" android:protectionLevel="signature"/>
+            <uses-permission android:name="[your.package].permission.C2D_MESSAGE"/>
+ 
+            <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
+            <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    
+            <application>
+                <receiver
+                    android:name="com.urbanairship.push.c2dm.C2DMPushReceiver" 
+                        android:permission="com.google.android.c2dm.permission.SEND">
+                    <intent-filter>
+                        <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
+                        <category android:name="[your.package]"/>
+                    </intent-filter>
+                    <intent-filter>
+                        <action android:name="com.google.android.c2dm.intent.REGISTRATION"/>
+                        <category android:name="[your.package]"/>
+                    </intent-filter>
+                </receiver>
+            </application>
+        </manifest>
+        <modules>
+            <module version="0.1">com.hmkang.TiUA</module>
+        </modules>
+    </android>
+
