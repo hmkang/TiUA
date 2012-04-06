@@ -33,10 +33,13 @@ import android.util.Log;
 import com.urbanairship.UAirship;
 import com.urbanairship.push.PushManager;
 
+import org.appcelerator.kroll.KrollDict;
+
 public class IntentReceiver extends BroadcastReceiver {
 
 	private static final String logTag = "TiUA";
-	
+	private KrollDict savedMessage = new KrollDict();
+
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		Log.i(logTag, "Received intent: " + intent.toString());
@@ -50,17 +53,24 @@ public class IntentReceiver extends BroadcastReceiver {
 		            + msg
 		            + " [NotificationID="+id+"]");
 
-            TiuaModule.getInstance().fireEvent("tiuapush", msg);
+			saveMessage(id, msg);
+			TiuaModule.getInstance().sendMessage(id, msg);
 
 		} else if (action.equals(PushManager.ACTION_NOTIFICATION_OPENED)) {
 
             String msg = intent.getStringExtra(PushManager.EXTRA_ALERT);
 			Log.i(logTag, "User clicked notification. Message: " + msg);
 
-            Intent launch = new Intent(Intent.ACTION_MAIN);
-            //launch.setClass(UAirship.shared().getApplicationContext(), getTiContext().getActivity().class);
-            launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			String className = TiuaModule.getInstance().getActivityName();
+			Log.i(logTag, "className: "+className);
 
+			KrollDict message = TiuaModule.getInstance().getMessage();
+			
+            Intent launch = new Intent(Intent.ACTION_MAIN);
+            launch.setClassName(UAirship.shared().getApplicationContext(), className);
+            launch.addCategory(Intent.CATEGORY_LAUNCHER);
+            launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            
             UAirship.shared().getApplicationContext().startActivity(launch);
 
 		} else if (action.equals(PushManager.ACTION_REGISTRATION_FINISHED)) {
@@ -68,10 +78,12 @@ public class IntentReceiver extends BroadcastReceiver {
             Boolean valid = intent.getBooleanExtra(PushManager.EXTRA_REGISTRATION_VALID, false) ;
             Log.i(logTag, "Registration complete. APID:" + apid
                     + ". Valid: " + valid);
-            if(!valid){
-                apid = "";
-            }
-            TiuaModule.getInstance().fireEvent("tiuaregister", apid);
+			TiuaModule.getInstance().registerCallback(valid, apid);
 		}
+	}
+	
+	private void saveMessage(int id, String alert) {
+		Log.i(logTag, "[" + savedMessage.size() + "] Message save: " + id + ":" + alert);
+		savedMessage.put(Integer.toString(id), alert);
 	}
 }
