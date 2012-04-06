@@ -30,6 +30,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import com.urbanairship.UAirship;
 import com.urbanairship.push.PushManager;
 
@@ -53,8 +56,7 @@ public class IntentReceiver extends BroadcastReceiver {
 		            + msg
 		            + " [NotificationID="+id+"]");
 
-			saveMessage(id, msg);
-			TiuaModule.getInstance().sendMessage(id, msg);
+			TiuaModule.getInstance().sendMessage(intent.getExtras());
 
 		} else if (action.equals(PushManager.ACTION_NOTIFICATION_OPENED)) {
 
@@ -64,9 +66,11 @@ public class IntentReceiver extends BroadcastReceiver {
 			String className = TiuaModule.getInstance().getActivityName();
 			Log.i(logTag, "className: "+className);
 
-			KrollDict message = TiuaModule.getInstance().getMessage();
-			
+			ArrayList messages = TiuaModule.getInstance().getMessageList();
+
             Intent launch = new Intent(Intent.ACTION_MAIN);
+            launch.putParcelableArrayListExtra("messages", messages);
+			launch.putExtra("opened", intent.getExtras());
             launch.setClassName(UAirship.shared().getApplicationContext(), className);
             launch.addCategory(Intent.CATEGORY_LAUNCHER);
             launch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -74,16 +78,12 @@ public class IntentReceiver extends BroadcastReceiver {
             UAirship.shared().getApplicationContext().startActivity(launch);
 
 		} else if (action.equals(PushManager.ACTION_REGISTRATION_FINISHED)) {
+		
             String apid = intent.getStringExtra(PushManager.EXTRA_APID);
             Boolean valid = intent.getBooleanExtra(PushManager.EXTRA_REGISTRATION_VALID, false) ;
             Log.i(logTag, "Registration complete. APID:" + apid
                     + ". Valid: " + valid);
 			TiuaModule.getInstance().registerCallback(valid, apid);
 		}
-	}
-	
-	private void saveMessage(int id, String alert) {
-		Log.i(logTag, "[" + savedMessage.size() + "] Message save: " + id + ":" + alert);
-		savedMessage.put(Integer.toString(id), alert);
 	}
 }

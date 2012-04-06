@@ -13,6 +13,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.app.Activity;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.kroll.KrollDict;
@@ -51,7 +54,7 @@ public class TiuaModule extends KrollModule
     
     private String mActivityName;
     private String mPackageName;
-    private KrollDict mMessage;
+    private ArrayList<Bundle> mMessageList;
 
 	// You can define constants with @Kroll.constant, for example:
 	// @Kroll.constant public static final String EXTERNAL_NAME = value;
@@ -69,7 +72,7 @@ public class TiuaModule extends KrollModule
         errorCallback = null;
         messageCallback = null;
 
-        mMessage = new KrollDict();
+        mMessageList = new ArrayList<Bundle>();
 	}
 
     static TiuaModule getInstance() {
@@ -78,7 +81,24 @@ public class TiuaModule extends KrollModule
 
     public void onResume(Activity activity) {
     	Log.i(LCAT, "onResume: ");
-    	
+    	Intent intent = activity.getIntent();
+    	ArrayList messages = intent.getParcelableArrayListExtra("messages");
+    	if(messages!=null) {
+    		mMessageList.addAll(messages);
+    	}
+    	Bundle opened = intent.getBundleExtra("opened");
+
+    	Log.i(LCAT, "total messages: "+mMessageList.size());
+		if(messages!=null) {
+    		Log.i(LCAT, "received messages: "+messages.size());
+    	}
+    	if(opened!=null) {
+    		Log.i(LCAT, "received opened: "+opened.getString(PushManager.EXTRA_ALERT));	
+    	}
+    	pushMessage();
+	}
+	
+	public void clearNotifications() {    	
     	// Clear all of notification messages.
     	String ns = getTiContext().getTiApp().NOTIFICATION_SERVICE;
 		NotificationManager mNotificationManager = (NotificationManager) getTiContext().getTiApp().getSystemService(ns);
@@ -92,36 +112,43 @@ public class TiuaModule extends KrollModule
 
     	Activity myAct = getTiContext().getTiApp().getCurrentActivity();
 		if (valid) {
-			if(myAct!=null) {
+			if(myAct!=null && successCallback!=null) {
 				successCallback.callAsync(getKrollObject(), dict);
 			}
 		} else {
-			if(myAct!=null) {
+			if(myAct!=null && errorCallback!=null) {
 				errorCallback.callAsync(getKrollObject(), dict);
 			}
 		}
 	}
 	
     private void pushMessage() {
-    	Log.i(LCAT, "Push message: " + mMessage.size());
+    	Log.i(LCAT, "Push message: " + mMessageList.size());
     	Activity myAct = getTiContext().getTiApp().getCurrentActivity();
-    	if(myAct != null && mMessage.isEmpty()==false){
-    		// Active state
-    		messageCallback.callAsync(getKrollObject(), mMessage);
-    		mMessage.clear();
+    	if(myAct != null) {
+    		// Make KrollDict value
+    		int size = mMessageList.size();
+    		KrollDict dict = new KrollDict();
+    		for (int i=0; i<size; i++) {
+    			Bundle bundle = mMessageList.get(i);
+    			int id = bundle.getInt(PushManager.EXTRA_NOTIFICATION_ID);
+    			String alert = bundle.getString(PushManager.EXTRA_ALERT);
+    			Log.i(LCAT, "message["+id+"] "+alert);
+    			dict.put(Integer.toString(id), alert);
+    		}
+    		if(size>0 && messageCallback != null) {
+    			messageCallback.callAsync(getKrollObject(), dict);
+			}
+    		mMessageList.clear();
+	    	clearNotifications();
     	}
     }
     
-    public KrollDict getMessage() {
-    	return mMessage;
-    }
-    
-    public void sendMessage(int id, String alert) {
-    	Log.i(LCAT, "Received from intent.");
-    	Log.i(LCAT, "["+id+"] "+alert);
+    public void sendMessage(Bundle bundle) {
+    	Log.i(LCAT, "Message from intent receiver.");
     	
-    	// Put message
-    	mMessage.put(Integer.toString(id), alert);
+    	// Put message to list
+    	mMessageList.add(bundle);
     	
     	// Push message
 		pushMessage();
@@ -145,12 +172,16 @@ public class TiuaModule extends KrollModule
         PushManager.shared().setIntentReceiver(IntentReceiver.class);
     }
 
-    public String getPackageName(){
+    public String getPackageName() {
     	return mPackageName;
     }
 
-    public String getActivityName(){
+    public String getActivityName() {
     	return mActivityName;
+    }
+    
+    public ArrayList getMessageList() {
+    	return mMessageList;
     }
 
     @Kroll.method
